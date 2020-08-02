@@ -30,6 +30,7 @@
 (defmethod create-route :show [{:keys [resource]}]
   (let [resource-name (name resource)]
     [(str "/" resource-name "/:id") {:name (keyword resource-name "show")
+                                     :conflicting true
                                      :controllers [{:start (fn [_] (prn resource " :show called"))}]}]))
 
 
@@ -42,14 +43,14 @@
   "Given a map containing a `resource` and a vector of `actions` create a set of Reitit route defintiions
 
   Valid actions are
- 
+
   - :index
   - :new
   - :show
   - :edit
 
   Example:
- 
+
       (create-routes {:resource :wibble :actions [:index :new]})
       ;; => [[\"/wibble\" {:name :wibble/index}][\"/wibble/new\" {:name :wibble/new}]"
 
@@ -58,3 +59,6 @@
 
   (vec (for [action actions]
      (create-route {:type action :resource resource}))))
+
+(defn status []
+  "compiled in clj/gandalf/core.cljc")
