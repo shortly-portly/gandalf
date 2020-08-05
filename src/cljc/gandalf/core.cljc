@@ -1,4 +1,7 @@
-(ns gandalf.core)
+(ns gandalf.core
+  (:require
+   [gandalf.events]
+   [re-frame.core :as rf]))
 
 (defmulti create-route
   "Given a http `action`, returns the corresponding Reitit route definition.
@@ -15,29 +18,31 @@
 
   :type)
 
-(defmethod create-route :index [{:keys [resource]}]
+(defmethod create-route :index [{:keys [resource attrs]}]
   (let [resource-name (name resource)]
-    [(str "/" resource-name) {:name (keyword resource-name "index")
-                              :controllers [{:start (fn [_] (prn resource " :index called"))}]}]))
+    [(str "/" resource-name) (merge {:name (keyword resource-name "index")
+                                     :controllers [{:start (fn [_] (rf/dispatch [:resource-index resource]))}]}
+                                    attrs)]))
 
-(defmethod create-route :new [{:keys [resource]}]
+(defmethod create-route :new [{:keys [resource attrs]}]
   (let [resource-name (name resource)]
-    [(str "/" resource-name "/new") {:name (keyword resource-name "new")
-                                     :conflicting true
-                                     :controllers [{:start (fn [_] (prn resource " :new called"))}]}]))
+    [(str "/" resource-name "/new") (merge {:name (keyword resource-name "new")
+                                            :conflicting true
+                                            :controllers [{:start (fn [_] (prn resource " :new called"))}]}
+                                           attrs)]))
 
-
-(defmethod create-route :show [{:keys [resource]}]
+(defmethod create-route :show [{:keys [resource attrs]}]
   (let [resource-name (name resource)]
-    [(str "/" resource-name "/:id") {:name (keyword resource-name "show")
-                                     :conflicting true
-                                     :controllers [{:start (fn [_] (prn resource " :show called"))}]}]))
+    [(str "/" resource-name "/:id") (merge {:name (keyword resource-name "show")
+                                            :conflicting true
+                                            :controllers [{:start (fn [_] (prn resource " :show called"))}]}
+                                           attrs)]))
 
-
-(defmethod create-route :edit [{:keys [resource]}]
+(defmethod create-route :edit [{:keys [resource attrs]}]
   (let [resource-name (name resource)]
-    [(str "/" resource-name "/:id/edit") {:name (keyword resource-name "edit")
-                                          :controllers [{:start (fn [_] (prn resource " :edit called"))}]}]))
+    [(str "/" resource-name "/:id/edit") (merge {:name (keyword resource-name "edit")
+                                                 :controllers [{:start (fn [_] (prn resource " :edit called"))}]}
+                                                attrs)]))
 
 (defn create-routes
   "Given a map containing a `resource` and a vector of `actions` create a set of Reitit route defintiions
@@ -55,10 +60,11 @@
       ;; => [[\"/wibble\" {:name :wibble/index}][\"/wibble/new\" {:name :wibble/new}]"
 
   [{:keys [resource actions]
-    :or {actions [:index :new :show :edit]}}]
+    :or {actions [:index :new :show :edit]}
+    :as attrs}]
 
   (vec (for [action actions]
-     (create-route {:type action :resource resource}))))
+         (create-route {:type action :resource resource :attrs (dissoc attrs :type :resource)}))))
 
 (defn status []
-  "compiled in clj/gandalf/core.cljc")
+  "compiled in clj/gandalf/core.cljc with leading slashes")
