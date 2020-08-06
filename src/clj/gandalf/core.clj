@@ -113,7 +113,6 @@
   (let [resource-plural (pluralise resource (:plural attrs))
         route-map (create-route-map actions resource attrs)]
 
-    (println "route-map :" (keys route-map))
     [(str "/" resource-plural)
      (if (or (:index route-map) (:create route-map))
 

@@ -1,4 +1,4 @@
-(ns gandalf.core
+(ns gandalf.common
   (:require
    [gandalf.events]
    [re-frame.core :as rf]))

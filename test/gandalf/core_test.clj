@@ -2,60 +2,79 @@
   (:require [clojure.test :refer :all]
             [gandalf.core :refer :all]))
 
-(deftest index-route
-  (testing "index route"
-    (let [[path params] (create-route {:type :index :resource :user})]
-      (is (= path "/user"))
-      (is (= (:name params) :user/index)))))
 
-(deftest new-route
-  (testing "new route"
-    (let [[path params] (create-route {:type :new :resource :user})]
-      (is (= path "/user/new"))
-      (is (= (:name params) :user/new)))))
+(deftest create-route-map-test
+  (testing "creating a route map"
+    (let [route-map (create-route-map  [:index :new :create] :user {})]
+      (is (some? (:index route-map)))
+      (is (some? (:new route-map)))
+      (is (some? (:create route-map)))
+      (is (nil? (:update route-map))))))
 
-(deftest show-route
-  (testing "show route"
-    (let [[path params] (create-route {:type :show :resource :user})]
-      (is (= path "/user/:id"))
-      (is (= (:name params) :user/show)))))
+(deftest create-all-route-map-test
+  (testing "creating a route map for all routes"
+    (let [route-map (create-route-map  [:index :new :create :show :edit :update :delete] :user {})
+          index-route (:index route-map)
+          new-route (:new route-map)
+          create-route (:create route-map)
+          show-route (:show route-map)
+          edit-route (:edit route-map)
+          update-route (:update route-map)
+          delete-route (:delete route-map)]
 
-(deftest edit-route
-  (testing "edit route"
-    (let [[path params] (create-route {:type :edit :resource :user})]
-      (is (= path "/user/:id/edit"))
-      (is (= (:name params) :user/edit)))))
+      (is (some? (:get index-route)))
+      (is (= (get-in index-route [:get :summary]) "Returns a list of users"))
 
-(deftest create-index-new-routes
-  (testing "create :index and :new routes"
-    (let [[index-route new-route] (create-routes {:resource :user :actions [:index :new]})]
-
-      (let [[path params] index-route]
-        (is (= path "/user"))
-        (is (= (:name params) :user/index)))
-
-      (let [[path params] new-route]
-        (is (= path "/user/new"))
-        (is (= (:name params) :user/new))))))
-
-(deftest create-default-routes
-  (testing "create default routes"
-    (let [[index-route new-route show-route edit-route] (create-routes {:resource :user})]
-
-      (let [[path params] index-route]
-        (is (= path "/user"))
-        (is (= (:name params) :user/index)))
-
-      (let [[path params] new-route]
-        (is (= path "/user/new"))
-        (is (= (:name params) :user/new)))
+      (is (some? (:get new-route)))
+      (is (= (get-in new-route [:get :summary]) "Returns a create user form"))
 
 
-    (let [[path params] show-route]
-      (is (= path "/user/:id"))
-      (is (= (:name params) :user/show)))
+      (is (some? (:post create-route)))
+      (is (= (get-in create-route [:post :summary]) "creates a new user, returning the id of the newly created user"))
 
+      (is (some? (:get show-route)))
+      (is (= (get-in show-route [:get :summary]) "Returns a user with the given id"))
 
-    (let [[path params] edit-route]
-      (is (= path "/user/:id/edit"))
-      (is (= (:name params) :user/edit))))))
+      (is (some? (:get edit-route)))
+      (is (= (get-in edit-route [:get :summary]) "Returns an edit user form"))
+
+      (is (some? (:post update-route)))
+      (is (= (get-in update-route [:post :summary]) "Updates a user with the given id"))
+
+      (is (some? (:delete delete-route)))
+      (is (= (get-in delete-route [:delete :summary]) "Deletes a user with the given id")))))
+
+;; {:index
+;;  {:get
+;;   {:summary "Returns a list of schools",
+;;    :handler #function[gandalf.core/eval162/fn--164/fn--166]}},
+;;  :new
+;;  {:conflicting true,
+;;   :get
+;;   {:summary "Returns a create school form",
+;;    :handler #function[gandalf.core/eval178/fn--180/fn--182]}},
+;;  :create
+;;  {:post
+;;   {:summary
+;;    "creates a new school, returning the id of the newly created school",
+;;    :handler #function[gandalf.core/eval170/fn--172/fn--174]}},
+;;  :show
+;;  {:conflicting true,
+;;   :get
+;;   {:summary "Returns a school with the given id",
+;;    :handler #function[gandalf.core/eval186/fn--188/fn--190]}},
+;;  :edit
+;;  {:conflicting true,
+;;   :get
+;;   {:summary "Returns an edit school form",
+;;    :handler #function[gandalf.core/eval194/fn--196/fn--198]}},
+;;  :update
+;;  {:conflicting true,
+;;   :post
+;;   {:summary "Updates a school with the given id",
+;;    :handler #function[gandalf.core/eval202/fn--204/fn--206]}},
+;;  :delete
+;;  {:conflicting true,
+;;   :delete
+;;   {:summary "Deletes a school with the given id",
+;;    :handler #function[gandalf.core/eval210/fn--212/fn--214]}}}
