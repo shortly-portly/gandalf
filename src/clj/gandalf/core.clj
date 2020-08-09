@@ -1,5 +1,5 @@
 (ns gandalf.core
-  (:require [clojure.set]))
+ (:require [reitit.core :as r]) )
 
 (defn pluralise
   "Return the string plural of the given keyword `resource` name.
@@ -38,6 +38,7 @@
 
 (defmethod create-route :index [{:keys [resource attrs]}]
   {:index {:get {:summary (str "Returns a list of " (pluralise resource (:plural attrs)))
+                 :name (keyword (name resource) "index")
                  :handler (fn [_]
                             {:status 200
                              :body "ok"})}}})
@@ -72,16 +73,16 @@
 (defmethod create-route :update [{:keys [resource attrs]}]
   {:update {:conflicting true
             :post {:summary (str "Updates a " (name resource) " with the given id")
-                  :handler (fn [_]
-                             {:status 200
-                              :body "ok"})}}})
+                   :handler (fn [_]
+                              {:status 200
+                               :body "ok"})}}})
 
 (defmethod create-route :delete [{:keys [resource attrs]}]
   {:delete {:conflicting true
             :delete {:summary (str "Deletes a " (name resource) " with the given id")
-                  :handler (fn [_]
-                             {:status 200
-                              :body "ok"})}}})
+                     :handler (fn [_]
+                                {:status 200
+                                 :body "ok"})}}})
 
 (defn create-route-map
   "Given a `resource` and a vector of `actions` generate a map of definitions suitable for building
@@ -92,6 +93,57 @@
   [actions resource attrs]
   (into {} (for [action actions]
              (create-route {:type action :resource resource :attrs (dissoc attrs :type :resource)}))))
+
+(defn index-create-routes
+  "Create the :index and :create route definitions"
+  [route-map]
+
+  (if (or (:index route-map) (:create route-map))
+
+    [""
+
+     (merge
+      (if (:index route-map)
+        (:index route-map)
+        {})
+
+      (if (:create route-map)
+        (:create route-map)
+        {}))]))
+
+(defn new-route
+  "Create the :new route definition"
+  [route-map]
+  (if (:new route-map)
+    ["/new"
+     (:new route-map)]))
+
+(defn edit-route
+  "Creates the :edit route definition"
+  [route-map]
+  (if (:edit route-map)
+    ["/:id/edit"
+     (:edit route-map)]))
+
+(defn show-update-delete-routes
+  "Create the :show, :edit, :delete route definitions"
+  [route-map]
+
+  (if (or (:show route-map) (:update route-map) (:delete route-map))
+    ["/:id"
+     (merge
+
+      (if (:show route-map)
+        (:show route-map)
+        {})
+
+      (if (:update route-map)
+        (:update route-map)
+        {})
+
+      (if (:delete route-map)
+        (:delete route-map)
+        {}))]))
 
 (defn create-routes
   "Given a map containing a `resource` and a vector of `actions` create a set of Reitit route defintiions
@@ -113,31 +165,9 @@
   (let [resource-plural (pluralise resource (:plural attrs))
         route-map (create-route-map actions resource attrs)]
 
-    [(str "/" resource-plural)
-     (if (or (:index route-map) (:create route-map))
-
-       [""
-        (if (:index route-map)
-          (:index route-map))
-
-        (if (:create route-map)
-          (:create route-map))])
-
-     (if (:new route-map)
-       ["/new"
-        (:new route-map)])
-
-     (if (or (:show route-map) (:edit route-map) (:delete route-map))
-       ["/:id"
-
-        (if (:show route-map)
-          (:show route-map))
-
-        (if (:edit route-map)
-          (:edit route-map))
-
-        (if (:update route-map)
-          (:update route-map))
-
-        (if (:delete route-map)
-          (:delete route-map))])]))
+    (vec (remove nil?
+                 [(str "/" resource-plural)
+                  (index-create-routes route-map)
+                  (new-route route-map)
+                  (edit-route route-map)
+                  (show-update-delete-routes route-map)]))))

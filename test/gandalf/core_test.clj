@@ -1,80 +1,100 @@
 (ns gandalf.core-test
   (:require [clojure.test :refer :all]
-            [gandalf.core :refer :all]))
+            [gandalf.core :refer :all]
+            [reitit.core :as r]))
+
+(deftest create-resource
+  (testing "creating a resource"
+    (let [routes (create-routes {:resource :user})
+          router (r/router routes)]
+
+      (let [route (r/match-by-path router "/users")]
+        (is (= (:path route) "/users"))
+        (is (= (get-in route [:data :get :summary]) "Returns a list of users"))
+        (is (= (get-in route [:data :post :summary]) "creates a new user, returning the id of the newly created user")))
+
+      (let [route (r/match-by-path router "/users/new")]
+        (is (= (:path route) "/users/new"))
+        (is (= (get-in route [:data :get :summary]) "Returns a create user form")))
+
+      (let [route (r/match-by-path router "/users/1/edit")]
+        (is (= (:path route) "/users/1/edit"))
+        (is (= (get-in route [:data :get :summary]) "Returns an edit user form")))
+
+      (let [route (r/match-by-path router "/users/1")]
+        (is (= (:path route) "/users/1"))
+
+        (is (= (get-in route [:data :get :summary]) "Returns a user with the given id"))
+        (is (= (get-in route [:data :post :summary]) "Updates a user with the given id"))
+        (is (= (get-in route [:data :delete :summary]) "Deletes a user with the given id"))))))
 
 
-(deftest create-route-map-test
-  (testing "creating a route map"
-    (let [route-map (create-route-map  [:index :new :create] :user {})]
-      (is (some? (:index route-map)))
-      (is (some? (:new route-map)))
-      (is (some? (:create route-map)))
-      (is (nil? (:update route-map))))))
+(deftest create-resource-with-plural
+  (testing "creating a resource with a plural name"
+    (let [routes (create-routes {:resource :child :plural :children})
+          router (r/router routes)]
 
-(deftest create-all-route-map-test
-  (testing "creating a route map for all routes"
-    (let [route-map (create-route-map  [:index :new :create :show :edit :update :delete] :user {})
-          index-route (:index route-map)
-          new-route (:new route-map)
-          create-route (:create route-map)
-          show-route (:show route-map)
-          edit-route (:edit route-map)
-          update-route (:update route-map)
-          delete-route (:delete route-map)]
-
-      (is (some? (:get index-route)))
-      (is (= (get-in index-route [:get :summary]) "Returns a list of users"))
-
-      (is (some? (:get new-route)))
-      (is (= (get-in new-route [:get :summary]) "Returns a create user form"))
+      (let [route (r/match-by-path router "/children")]
+        (is (= (:path route) "/children"))
+        (is (= (get-in route [:data :get :summary]) "Returns a list of children"))
+        (is (= (get-in route [:data :post :summary]) "creates a new child, returning the id of the newly created child")))
 
 
-      (is (some? (:post create-route)))
-      (is (= (get-in create-route [:post :summary]) "creates a new user, returning the id of the newly created user"))
+      (let [route (r/match-by-path router "/children/new")]
+        (is (= (:path route) "/children/new"))
+        (is (= (get-in route [:data :get :summary]) "Returns a create child form")))
 
-      (is (some? (:get show-route)))
-      (is (= (get-in show-route [:get :summary]) "Returns a user with the given id"))
+      (let [route (r/match-by-path router "/children/1/edit")]
+        (is (= (:path route) "/children/1/edit"))
+        (is (= (get-in route [:data :get :summary]) "Returns an edit child form")))
 
-      (is (some? (:get edit-route)))
-      (is (= (get-in edit-route [:get :summary]) "Returns an edit user form"))
+      (let [route (r/match-by-path router "/children/1")]
+        (is (= (:path route) "/children/1"))
+        (is (= (get-in route [:data :get :summary]) "Returns a child with the given id"))
+        (is (= (get-in route [:data :post :summary]) "Updates a child with the given id"))
+        (is (= (get-in route [:data :delete :summary]) "Deletes a child with the given id"))))))
 
-      (is (some? (:post update-route)))
-      (is (= (get-in update-route [:post :summary]) "Updates a user with the given id"))
+(deftest create-specific-actions
+  (testing "creating a set of specifc routes for a resource"
+    (let [routes (create-routes {:resource :user :actions [:new :index]})
+          router (r/router routes)]
 
-      (is (some? (:delete delete-route)))
-      (is (= (get-in delete-route [:delete :summary]) "Deletes a user with the given id")))))
+      (let [route (r/match-by-path router "/users")]
+        (is (= (:path route) "/users"))
+        (is (= (get-in route [:data :get :summary]) "Returns a list of users"))
+        (is (= (get-in route [:data :post :summary]) nil)))
 
-;; {:index
-;;  {:get
-;;   {:summary "Returns a list of schools",
-;;    :handler #function[gandalf.core/eval162/fn--164/fn--166]}},
-;;  :new
-;;  {:conflicting true,
-;;   :get
-;;   {:summary "Returns a create school form",
-;;    :handler #function[gandalf.core/eval178/fn--180/fn--182]}},
-;;  :create
-;;  {:post
-;;   {:summary
-;;    "creates a new school, returning the id of the newly created school",
-;;    :handler #function[gandalf.core/eval170/fn--172/fn--174]}},
-;;  :show
-;;  {:conflicting true,
-;;   :get
-;;   {:summary "Returns a school with the given id",
-;;    :handler #function[gandalf.core/eval186/fn--188/fn--190]}},
-;;  :edit
-;;  {:conflicting true,
-;;   :get
-;;   {:summary "Returns an edit school form",
-;;    :handler #function[gandalf.core/eval194/fn--196/fn--198]}},
-;;  :update
-;;  {:conflicting true,
-;;   :post
-;;   {:summary "Updates a school with the given id",
-;;    :handler #function[gandalf.core/eval202/fn--204/fn--206]}},
-;;  :delete
-;;  {:conflicting true,
-;;   :delete
-;;   {:summary "Deletes a school with the given id",
-;;    :handler #function[gandalf.core/eval210/fn--212/fn--214]}}}
+      (let [route (r/match-by-path router "/users/new")]
+        (is (= (:path route) "/users/new"))
+        (is (= (get-in route [:data :get :summary]) "Returns a create user form")))
+
+      (let [route (r/match-by-path router "/users/1")]
+        (is (= (:path route) nil))))))
+
+(deftest specific-routes
+  (testing "create and update routes"
+    (let [routes (create-routes {:resource :user :actions [:create :update]})
+          router (r/router routes)]
+
+      (let [route (r/match-by-path router "/users")]
+        (is (= (:path route) "/users"))
+        (is (= (get-in route [:data :get :summary]) nil))
+        (is (= (get-in route [:data :post :summary]) "creates a new user, returning the id of the newly created user")))
+
+      (let [route (r/match-by-path router "/users/1")]
+        (println "routes :" (r/routes router))
+        (is (= (:path route) "/users/1"))
+        (is (= (get-in route [:data :get :summary]) nil))
+        (is (= (get-in route [:data :post :summary]) "Updates a user with the given id"))
+        (is (= (get-in route [:data :delete :summary]) nil)))))
+
+  (testing "create and update routes"
+    (let [routes (create-routes {:resource :user :actions [:show :edit :delete]})
+          router (r/router routes)]
+
+      (let [route (r/match-by-path router "/users/1")]
+        (println "routes :" (r/routes router))
+        (is (= (:path route) "/users/1"))
+        (is (= (get-in route [:data :get :summary]) "Returns a user with the given id"))
+        (is (= (get-in route [:data :post :summary]) nil))
+        (is (= (get-in route [:data :delete :summary]) "Deletes a user with the given id"))))))
