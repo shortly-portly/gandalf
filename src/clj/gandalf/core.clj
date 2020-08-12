@@ -1,5 +1,5 @@
 (ns gandalf.core
- (:require [reitit.core :as r]) )
+  (:require [reitit.core :as r]))
 
 (defn pluralise
   "Return the string plural of the given keyword `resource` name.
@@ -40,8 +40,9 @@
   {:index {:get {:summary (str "Returns a list of " (pluralise resource (:plural attrs)))
                  :name (keyword (name resource) "index")
                  :handler (fn [_]
+                            (println "INDEX called")
                             {:status 200
-                             :body "ok"})}}})
+                             :body {:msg "Index Route called"}})}}})
 
 (defmethod create-route :create [{:keys [resource attrs]}]
   {:create {:post {:summary (str "creates a new " (name resource) ", returning the id of the newly created " (name resource))
@@ -167,6 +168,9 @@
 
     (vec (remove nil?
                  [(str "/" resource-plural)
+
+
+
                   (index-create-routes route-map)
                   (new-route route-map)
                   (edit-route route-map)
