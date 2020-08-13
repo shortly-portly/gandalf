@@ -82,7 +82,6 @@
         (is (= (get-in route [:data :post :summary]) "creates a new user, returning the id of the newly created user")))
 
       (let [route (r/match-by-path router "/users/1")]
-        (println "routes :" (r/routes router))
         (is (= (:path route) "/users/1"))
         (is (= (get-in route [:data :get :summary]) nil))
         (is (= (get-in route [:data :post :summary]) "Updates a user with the given id"))
@@ -93,7 +92,6 @@
           router (r/router routes)]
 
       (let [route (r/match-by-path router "/users/1")]
-        (println "routes :" (r/routes router))
         (is (= (:path route) "/users/1"))
         (is (= (get-in route [:data :get :summary]) "Returns a user with the given id"))
         (is (= (get-in route [:data :post :summary]) nil))

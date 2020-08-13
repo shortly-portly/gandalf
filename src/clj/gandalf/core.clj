@@ -150,7 +150,7 @@
         {}))]))
 
 (defn create-routes
-  "Given a map containing a `resource` and a vector of `actions` create a set of Reitit route defintiions
+  "Given a map containing a `resource` and a vector of `actions` create a set of RESTful Reitit route defintiions.
 
   Valid actions are
 
