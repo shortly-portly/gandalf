@@ -22,25 +22,28 @@
     (str (name resource) "s")))
 
 (defmulti create-route
-  "Given a http `action`, returns the corresponding Reitit route definition.
+  "Given a http `action`, returns a map that will be subsequently be combined
+  with a URL to form a RESTful route for this action.
 
-  | action | route |
-  |--------|-------|
-  | :index | [\"/foo\" {:name :foo/index}]
-  | :new   | [\"/foo/new\" {:name :foo/new}]
-  | :show  | [\"/foo/:id\" {:name :foo/show}
-  | :edit  | [\"/foo/:id/edit\" {:name :foo/edit}
+  The second argument to this function is a map with the following keys currently defined:
 
-      (route {:type :show :resource :user})
-      ;; => [\"/user/:id\" {:name :user/show}]"
+  | Key      | Meaning |
+  |----------|---------|
+  | action   | One of :index, :create, :new, :show, :edit, :update, :delete
+  | resource | The resource name for this action
+  | plural   | An optional plural version of the resource to improve documentation of the action
+
+      (create-route {:type :index :resource :user})
+      ;; => {:index
+      {:get
+        {:summary \"Returns a list of users\",
+         :handler #function[gandalf.core/eval1391/fn--1393/fn--1395]}}}"
 
   :type)
 
 (defmethod create-route :index [{:keys [resource attrs]}]
   {:index {:get {:summary (str "Returns a list of " (pluralise resource (:plural attrs)))
-                 :name (keyword (name resource) "index")
                  :handler (fn [_]
-                            (println "INDEX called")
                             {:status 200
                              :body {:msg "Index Route called"}})}}})
 
