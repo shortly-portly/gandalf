@@ -5,7 +5,7 @@
 (deftest index-route
   (testing "index route"
     (let [[path params] (create-route {:type :index :resource :user})]
-      (is (= path "/user"))
+      (is (= path "/users"))
       (is (= (:name params) :user/index)))))
 
 (deftest new-route
@@ -31,7 +31,7 @@
     (let [[index-route new-route] (create-routes {:resource :user :actions [:index :new]})]
 
       (let [[path params] index-route]
-        (is (= path "/user"))
+        (is (= path "/users"))
         (is (= (:name params) :user/index)))
 
       (let [[path params] new-route]
@@ -43,7 +43,7 @@
     (let [[index-route new-route show-route edit-route] (create-routes {:resource :user})]
 
       (let [[path params] index-route]
-        (is (= path "/user"))
+        (is (= path "/users"))
         (is (= (:name params) :user/index)))
 
       (let [[path params] new-route]
@@ -59,3 +59,9 @@
     (let [[path params] edit-route]
       (is (= path "/user/:id/edit"))
       (is (= (:name params) :user/edit))))))
+
+(deftest create-resource-with-plural
+  (testing "create a resource with a plural name provided"
+    (let [[path params] (create-route {:type :index :resource :child :plural :children})]
+      (is (= path "/children"))
+      (is (= (:name params) :child/index)))))

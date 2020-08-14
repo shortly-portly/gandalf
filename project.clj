@@ -5,11 +5,12 @@
             :url "https://www.eclipse.org/legal/epl-2.0/"}
   :dependencies [
                  [cljs-ajax "0.8.0"]
+                 [honeysql "1.0.444"]
+                 [metosin/reitit "0.5.2"]
+                 [metosin/malli "0.0.1-SNAPSHOT"]
                  [org.clojure/clojure "1.10.1"]
                  [org.clojure/clojurescript "1.10.773"]
                  [re-frame "1.0.0"]
-                 [metosin/reitit "0.5.2"]
-                 [metosin/malli "0.0.1-SNAPSHOT"]
                  ]
   :plugins [[lein-codox "0.10.7"]
             [lein-cloverage "1.1.2"]
