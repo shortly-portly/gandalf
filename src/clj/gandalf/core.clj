@@ -41,7 +41,7 @@
 
   :type)
 
-(defmethod create-route :index [{:keys [resource attrs]}]
+(defmethod create-route :index [{:keys [resource attrs] :as resource-map}]
   {:index {:get {:summary (str "Returns a list of " (pluralise resource (:plural attrs)))
                  :handler (fn [_]
                             {:status 200

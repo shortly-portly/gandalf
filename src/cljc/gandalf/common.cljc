@@ -1,6 +1,7 @@
 (ns gandalf.common
   (:require
    [gandalf.events]
+   [gandalf.view :as view]
    [re-frame.core :as rf]))
 
 (defn pluralise
@@ -51,8 +52,9 @@
         resource-plural (pluralise resource plural)
         url (str "/" resource-plural)]
     [url (merge {:name (keyword resource-name "index")
-                                     :controllers [{:start (fn [_] (rf/dispatch [:resource-index resource url]))}]}
-                                    attrs)]))
+                 :controllers [{:start (fn [_] (rf/dispatch [:resource-index resource url]))}]
+                 :view #'view/index-page }
+                attrs)]))
 
 (defmethod create-route :new [{:keys [resource attrs]}]
   (let [resource-name (name resource)]

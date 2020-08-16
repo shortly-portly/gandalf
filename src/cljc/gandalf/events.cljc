@@ -7,9 +7,12 @@
 
 (rf/reg-event-fx
  :resource-index
- (fn [{:keys [db]} _]
+ (fn [{:keys [db]} [_ resource url]]
+   (prn "resource :" resource)
+   (prn "url :" url)
      {:http-xhrio {:method :get
-                   :uri "/wibbles"
+                   :uri url
+                   :params resource
                    :format (ajax/transit-request-format)
                    :response-format (ajax/transit-response-format)
                    :on-success [:set-new-org]

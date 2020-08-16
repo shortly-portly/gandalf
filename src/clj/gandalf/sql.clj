@@ -1,6 +1,6 @@
 (ns gandalf.sql
 (:require [honeysql.core :as sql]
-         [honeysql.helpers :refer :all :as helpers]))
+         [honeysql.helpers :as helpers]))
 
 
 (def sqlmap {:select [:*]
@@ -8,7 +8,14 @@
              })
 
 
+(defn index-query [resource-map]
+  (let [resource-name (get resource-map :resource-name)
+        table-name (get resource-map :table resource-name)]
+    {:select [:*]
+     :from [table-name]}
+  ))
 
+;; ------------------------------------------------------------------------
 (comment
 (def conn {:datasource db/*db*})
 
