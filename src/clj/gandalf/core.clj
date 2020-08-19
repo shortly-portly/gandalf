@@ -44,12 +44,16 @@
   :type)
 
 (defmethod create-route :index [{:keys [resource] :as resource-map}]
-  (let [query (get-in resource-map [:sql :index] (sql/default-index-query resource-map))]
-  {:index {:get {:summary (str "Returns a list of " (pluralise resource (:plural resource-map)))
-                 :handler (fn [_]
-                            (let [results (sql/fetch-results query)]
-                            {:status 200
-                             :body {:msg "Index Route called"}}))}}}))
+  (let [query (get-in resource-map [:sql :index] (sql/default-index-query resource-map))
+        schema (get resource-map :schema [])
+        view (get-in resource-map [:view :index])]
+    {:index {:get {:summary (str "Returns a list of " (pluralise resource (:plural resource-map)))
+                   :handler (fn [_]
+                              (let [results (sql/fetch-results query)]
+                                {:status 200
+                                 :body {:data results
+                                        :schema schema
+                                        :view view}}))}}}))
 
 (defmethod create-route :create [{:keys [resource]}]
   {:create {:post {:summary (str "creates a new " (name resource) ", returning the id of the newly created " (name resource))
@@ -101,7 +105,7 @@
   definitions)."
   [actions resource-map]
   (into {} (for [action actions]
-             (create-route (merge {:type action} resource-map )))))
+             (create-route (merge {:type action} resource-map)))))
 
 (defn index-create-routes
   "Create the :index and :create route definitions"

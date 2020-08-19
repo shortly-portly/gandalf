@@ -13,14 +13,13 @@
                    :params {:resource resource}
                    :format (ajax/transit-request-format)
                    :response-format (ajax/transit-response-format)
-                   :on-success [:set-new-org]
+                   :on-success [:set-resource-index resource]
                    :on-failure [:oops]}}))
 
 (rf/reg-event-db
- :set-new-org
- (fn [db [_ result]]
-   (prn ":set-new-org called")
-   db))
+ :set-resource-index
+ (fn [db [_ resource data]]
+   (assoc db resource data)))
 
 (rf/reg-event-db
  :oops
