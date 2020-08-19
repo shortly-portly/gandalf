@@ -1,5 +1,7 @@
 (ns gandalf.core
-  (:require [reitit.core :as r]))
+  (:require [reitit.core :as r]
+            [reitit.coercion.spec]
+            [gandalf.sql :as sql]))
 
 (defn pluralise
   "Return the string plural of the given keyword `resource` name.
@@ -41,47 +43,50 @@
 
   :type)
 
-(defmethod create-route :index [{:keys [resource attrs] :as resource-map}]
-  {:index {:get {:summary (str "Returns a list of " (pluralise resource (:plural attrs)))
+(defmethod create-route :index [{:keys [resource] :as resource-map}]
+  (let [query (get-in resource-map [:sql :index] (sql/default-index-query resource-map))]
+  {:index {:get {:summary (str "Returns a list of " (pluralise resource (:plural resource-map)))
                  :handler (fn [_]
+                            (let [results (sql/fetch-results query)]
                             {:status 200
-                             :body {:msg "Index Route called"}})}}})
+                             :body {:msg "Index Route called"}}))}}}))
 
-(defmethod create-route :create [{:keys [resource attrs]}]
+(defmethod create-route :create [{:keys [resource]}]
   {:create {:post {:summary (str "creates a new " (name resource) ", returning the id of the newly created " (name resource))
-                   :handler (fn [_]
+                   :handler (fn [foo]
+                              (prn foo)
                               {:status 200
                                :body "ok"})}}})
 
-(defmethod create-route :new [{:keys [resource attrs]}]
+(defmethod create-route :new [{:keys [resource]}]
   {:new {:conflicting true
          :get {:summary (str "Returns a create " (name resource) " form")
                :handler (fn [_]
                           {:status 200
                            :body "ok"})}}})
 
-(defmethod create-route :show [{:keys [resource attrs]}]
+(defmethod create-route :show [{:keys [resource]}]
   {:show {:conflicting true
           :get {:summary (str "Returns a " (name resource) " with the given id")
                 :handler (fn [_]
                            {:status 200
                             :body "ok"})}}})
 
-(defmethod create-route :edit [{:keys [resource attrs]}]
+(defmethod create-route :edit [{:keys [resource]}]
   {:edit {:conflicting true
           :get {:summary (str "Returns an edit " (name resource) " form")
                 :handler (fn [_]
                            {:status 200
                             :body "ok"})}}})
 
-(defmethod create-route :update [{:keys [resource attrs]}]
+(defmethod create-route :update [{:keys [resource]}]
   {:update {:conflicting true
             :post {:summary (str "Updates a " (name resource) " with the given id")
                    :handler (fn [_]
                               {:status 200
                                :body "ok"})}}})
 
-(defmethod create-route :delete [{:keys [resource attrs]}]
+(defmethod create-route :delete [{:keys [resource]}]
   {:delete {:conflicting true
             :delete {:summary (str "Deletes a " (name resource) " with the given id")
                      :handler (fn [_]
@@ -94,9 +99,9 @@
 
   The map produced isn't a valid Reitit route map as it doesn't contain the url elements (just the http action
   definitions)."
-  [actions resource attrs]
+  [actions resource-map]
   (into {} (for [action actions]
-             (create-route {:type action :resource resource :attrs (dissoc attrs :type :resource)}))))
+             (create-route (merge {:type action} resource-map )))))
 
 (defn index-create-routes
   "Create the :index and :create route definitions"
@@ -164,15 +169,13 @@
 
   [{:keys [resource actions]
     :or {actions [:index :new :create :show :edit :update :delete]}
-    :as attrs}]
+    :as resource-map}]
 
-  (let [resource-plural (pluralise resource (:plural attrs))
-        route-map (create-route-map actions resource attrs)]
+  (let [resource-plural (pluralise resource (:plural resource-map))
+        route-map (create-route-map actions resource-map)]
 
     (vec (remove nil?
                  [(str "/" resource-plural)
-
-
 
                   (index-create-routes route-map)
                   (new-route route-map)
