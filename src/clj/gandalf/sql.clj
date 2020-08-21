@@ -29,7 +29,7 @@
 
 (defn fetch-results
   [query]
-  (j/query @ds (sql/format query)))
+  (j/query @ds (sql/format query :params {:foo :rrrr})))
 
 ;; ------------------------------------------------------------------------
 (comment

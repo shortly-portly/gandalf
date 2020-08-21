@@ -18,8 +18,12 @@
 
 (rf/reg-event-db
  :set-resource-index
- (fn [db [_ resource data]]
-   (assoc db resource data)))
+ (fn [db [_ resource {:keys [data schema view]}]]
+   (-> db
+       (assoc :resource resource)
+       (assoc-in [:data resource] data)
+       (assoc-in [:schema resource] schema)
+       (assoc-in [:view resource] view))))
 
 (rf/reg-event-db
  :oops
@@ -27,3 +31,11 @@
    (prn "oops")
    (prn result)
    db))
+
+(rf/reg-sub
+ :view
+ (fn [db _]
+   (let [resource (:resource db)]
+     (if resource
+       (get-in db [:view resource])
+       nil))))

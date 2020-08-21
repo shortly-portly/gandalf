@@ -50,6 +50,7 @@
     {:index {:get {:summary (str "Returns a list of " (pluralise resource (:plural resource-map)))
                    :handler (fn [_]
                               (let [results (sql/fetch-results query)]
+                                (prn "results :" results)
                                 {:status 200
                                  :body {:data results
                                         :schema schema
