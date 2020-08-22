@@ -13,6 +13,7 @@
                  [org.clojure/clojurescript "1.10.773"]
                  [org.clojure/java.jdbc "0.7.11"]
                  [re-frame "1.0.0"]
+                 [reagent "0.10.0"]
                  ]
   :plugins [[lein-codox "0.10.7"]
             [lein-cloverage "1.1.2"]
@@ -22,17 +23,12 @@
   :repl-options {:init-ns gandalf.core}
   :source-paths ["src/clj" "src/cljs" "src/cljc"]
 :cljsbuild
-{:builds {:minify {:source-paths ["src-cljs"]
+{:builds {:minify {:source-paths ["src/cljc"]
                    :compiler {:optimizations :advanced
                               :pretty-print false}}
           :dev {:source-paths ["src-cljs"]
-                :compiler {:optimizations :whitespace}}
-          :test {:id "test"
-                 :source-paths ["src-cljs" "test"]
-                 :compiler {:output-to "target/cljs-tests.js"
-                            :output-dir "target"
-                            :main my-lib.runner
-                            :optimizations :none
-                            :target :nodejs}}}}
+                :compiler {:optimizations :whitespace}}}}
+
+  :aliases {"wibble" ["do" "clean," "compile," "cljsbuild" "once," "install"]}
 
   )

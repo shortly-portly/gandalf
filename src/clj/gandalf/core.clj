@@ -49,7 +49,7 @@
         view (get-in resource-map [:view :index])]
     {:index {:get {:summary (str "Returns a list of " (pluralise resource (:plural resource-map)))
                    :handler (fn [_]
-                              (let [results (sql/fetch-results query)]
+                              (let [results (into [] (sql/fetch-results query))]
                                 (prn "results :" results)
                                 {:status 200
                                  :body {:data results

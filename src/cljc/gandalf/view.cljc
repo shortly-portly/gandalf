@@ -1,6 +1,7 @@
 (ns gandalf.view
   (:require
-    [re-frame.core :as rf]))
+   [gandalf.widget :as widget]
+   [re-frame.core :as rf]))
 
 ;; (defn index-page []
 ;;   [:section.section>div.container>div.content
@@ -12,5 +13,5 @@
 (defn index-page []
   [:section.section>div.container>div.content
    (when-let [view @(rf/subscribe [:view])]
-     (prn "found the following view...:" view)
-     [:h1 "woohoo"])])
+
+     [widget/widget view])])
