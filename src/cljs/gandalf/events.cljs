@@ -1,20 +1,25 @@
 (ns gandalf.events
   (:require
     [re-frame.core :as rf]
-    [ajax.core :as ajax]))
+    [ajax.core :as ajax]
+    [reitit.core :as r]))
 
 ;;dispatchers
 
 (rf/reg-event-fx
  :resource-index
- (fn [{:keys [db]} [_ resource url]]
+ (fn [{:keys [db]} [_ resource url resource-name]]
+   (let [router (:router db)
+         match (r/match-by-name router resource-name)
+         path  (:path match)]
+     (prn "path is...." path)
      {:http-xhrio {:method :get
                    :uri url
                    :params {:resource resource}
                    :format (ajax/transit-request-format)
                    :response-format (ajax/transit-response-format)
                    :on-success [:set-resource-index resource]
-                   :on-failure [:oops]}}))
+                   :on-failure [:oops]}})))
 
 ;; The :set-resource-index event is called whenever a succesful request to the index action for a resource
 ;; has been received.
@@ -42,11 +47,34 @@
 ;; It displays the returned error message to the console.
 
 (rf/reg-event-db
+ :get-resource
+ (fn [db [_ resource id]]
+   (let [router (:router db)
+         match (r/match-by-name router resource {:id id})
+         path  (:path match)]
+     (prn "resource is..." resource)
+     (prn "id is..." id)
+     (prn "path is...." path)
+     {:http-xhrio {:method :get
+                   :uri path
+                   :params {:resource resource}
+                   :format (ajax/transit-request-format)
+                   :response-format (ajax/transit-response-format)
+                   :on-success [:set-resource-index resource]
+                   :on-failure [:oops]}})))
+
+
+(rf/reg-event-db
  :oops
  (fn [db [_ result]]
    (prn "oops")
    (prn result)
    db))
+
+(rf/reg-event-db
+ :set-router
+ (fn [db [_ router]]
+   (assoc db :router router)))
 
 ;; The :view subscription function returns the definition of how the currently defined :resource should
 ;; be displayed. Note: It is possible that no :resource has been defined in which case this function should

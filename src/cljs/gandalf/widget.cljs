@@ -14,7 +14,6 @@
       (clojure.string/replace "_" " ")
       (clojure.string/capitalize)))
 
-
 (defn label-for
   "Returns the label for a the given `field`.
 
@@ -23,29 +22,47 @@
   the field path with the first letter capitalised and any underscores replaced
   with spaces."
   [field]
-  (if (:label field) (:label field) (field-path-to-string(:path field))))
+  (if (:label field) (:label field) (field-path-to-string (:path field))))
+
+(def default-row-actions
+  {:show [:get-resource]
+   :edit [:post-resource]
+   :delete [:delete-resource]})
+
+(defn build-row-action
+  [action resource id]
+  ^{:key action}
+  [:a {:href "#"
+       :on-click #(rf/dispatch (conj (action default-row-actions) (keyword resource (name action)) id))} action])
 
 (defmulti widget :type)
 
-(defmethod widget :text [{:keys [path label]}]
+(defmethod widget :text [{:keys [path]}]
   (let [value (r/atom @(rf/subscribe [:data path]))]
     (fn []
       [:div
-      [:span @value]])))
+       [:span @value]])))
 
+(defmethod widget :actions [{:keys [path resource actions]}]
+  (let [id @(rf/subscribe [:data path])]
+    (fn []
+      [:div
+    (map #(build-row-action % resource id) actions)])))
 
 (defmethod widget :table [view]
   (fn []
-    (let [root   [(:path view)]
-          fields (:fields view)
-          item-count @(rf/subscribe [:item-count root])]
+    (let [root        [(:path view)]
+          fields      (:fields view)
+          row-actions (:row-actions view)
+          item-count  @(rf/subscribe [:item-count root])]
       [:table.table
-        [:thead
-         [:tr
-          (for [field fields]
-            ^{:key field}
-            [:th
-             (label-for field)])]]
+       [:thead
+        [:tr
+         (for [field fields]
+           ^{:key field}
+           [:th
+            (label-for field)])
+         (if row-actions [:th "Actions"])]]
        [:tbody
         (for [index (range item-count)]
           ^{:key index}
