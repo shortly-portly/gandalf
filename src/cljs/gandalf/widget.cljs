@@ -33,24 +33,28 @@
   [action resource id]
   ^{:key action}
   [:a {:href "#"
-       :on-click #(rf/dispatch (conj (action default-row-actions) (keyword resource (name action)) id))} action])
+       :on-click (fn [e]
+                   (.preventDefault e)
+                   (rf/dispatch (conj (action default-row-actions) (keyword resource (name action)) id))
+                   )
+       } action])
+
+;;      [:li [:a {:href (rfe/href ::item {:id 1})} "Item 1"]]
 
 (defmulti widget :type)
 
 (defmethod widget :text [{:keys [path]}]
   (let [value (r/atom @(rf/subscribe [:data path]))]
-    (fn []
       [:div
-       [:span @value]])))
+       [:span @value]]))
 
 (defmethod widget :actions [{:keys [path resource actions]}]
   (let [id @(rf/subscribe [:data path])]
-    (fn []
       [:div
-    (map #(build-row-action % resource id) actions)])))
+    (map #(build-row-action % resource id) actions)]))
 
 (defmethod widget :table [view]
-  (fn []
+  (prn ":table :" view)
     (let [root        [(:path view)]
           fields      (:fields view)
           row-actions (:row-actions view)
@@ -72,4 +76,4 @@
              [:td
               (let [data-path   (build-path root index (:path field))
                     widget-data (assoc field :path data-path)]
-                [widget widget-data])])])]])))
+                [widget widget-data])])])]]))

@@ -1,7 +1,8 @@
 (ns gandalf.core
   (:require [reitit.core :as r]
             [reitit.coercion.spec]
-            [gandalf.sql :as sql]))
+            [gandalf.sql :as sql]
+            [clojure.pprint]))
 
 (defn pluralise
   "Return the string plural of the given keyword `resource` name.
@@ -49,7 +50,7 @@
         view (get-in resource-map [:view :index])]
     {:index {:get {:summary (str "Returns a list of " (pluralise resource (:plural resource-map)))
                    :handler (fn [_]
-                              (let [results (into [] (sql/fetch-results query))]
+                              (let [results (into [] (sql/fetch-results query {}))]
                                 (prn "results :" results)
                                 {:status 200
                                  :body {:data results
@@ -70,12 +71,21 @@
                           {:status 200
                            :body "ok"})}}})
 
-(defmethod create-route :show [{:keys [resource]}]
+
+(defmethod create-route :show [{:keys [resource] :as resource-map}]
+  (let [query (get-in resource-map [:sql :show] (sql/default-show-query resource-map))
+        schema (get resource-map :schema [])
+        view (get-in resource-map [:view :show] [])]
   {:show {:conflicting true
           :get {:summary (str "Returns a " (name resource) " with the given id")
-                :handler (fn [_]
+                :parameters {:path {:id int?}}
+                :handler (fn [{:keys [path-params]}]
+                                 (let [results (into [] (sql/fetch-results query path-params))]
+                             (prn "results for :show :" results)
                            {:status 200
-                            :body "ok"})}}})
+                            :body {:data results
+                                   :schema schema
+                                   :view view}}))}}}))
 
 (defmethod create-route :edit [{:keys [resource]}]
   {:edit {:conflicting true

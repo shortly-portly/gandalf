@@ -9,10 +9,10 @@
 (rf/reg-event-fx
  :resource-index
  (fn [{:keys [db]} [_ resource url resource-name]]
+   (prn ":resource-index fx called")
    (let [router (:router db)
          match (r/match-by-name router resource-name)
          path  (:path match)]
-     (prn "path is...." path)
      {:http-xhrio {:method :get
                    :uri url
                    :params {:resource resource}
@@ -46,23 +46,28 @@
 ;; The :oops event is called whenever a http request to the server fails for some reason.
 ;; It displays the returned error message to the console.
 
-(rf/reg-event-db
+(rf/reg-event-fx
  :get-resource
- (fn [db [_ resource id]]
+ (fn [{:keys [db]} [_ resource id ]]
    (let [router (:router db)
          match (r/match-by-name router resource {:id id})
          path  (:path match)]
-     (prn "resource is..." resource)
-     (prn "id is..." id)
-     (prn "path is...." path)
      {:http-xhrio {:method :get
                    :uri path
                    :params {:resource resource}
                    :format (ajax/transit-request-format)
                    :response-format (ajax/transit-response-format)
-                   :on-success [:set-resource-index resource]
+                   :on-success [:set-resource-view resource]
                    :on-failure [:oops]}})))
 
+(rf/reg-event-db
+ :set-resource-view
+ (fn [db [_ resource {:keys [data schema view]}]]
+   (-> db
+       (assoc :resource resource)
+       (assoc-in [:data resource] data)
+       (assoc-in [:schema resource] schema)
+       (assoc-in [:view resource] view))))
 
 (rf/reg-event-db
  :oops
@@ -110,6 +115,7 @@
  :view
  (fn [db _]
    (let [resource (:resource db)]
+     (prn ":view sub called...returns..." (get-in db [:view resource]))
      (if resource
        (get-in db [:view resource])
        nil))))

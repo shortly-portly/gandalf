@@ -55,19 +55,19 @@
                  :controllers [{:start (fn [_] (rf/dispatch [:resource-index resource url (keyword resource-name "index")]))}]
                  :view #'view/index-page }
                 attrs)]))
-
-(defmethod create-route :new [{:keys [resource attrs]}]
-  (let [resource-name (name resource)]
-    [(str "/" resource-name "/new") (merge {:name (keyword resource-name "new")
+(defmethod create-route :new [{:keys [resource plural attrs]}]
+  (let [resource-name (name resource)
+        resource-plural (pluralise resource plural)]
+    [(str "/" resource-plural "/new") (merge {:name (keyword resource-name "new")
                                             :conflicting true
                                             :controllers [{:start (fn [_] (prn resource " :new called"))}]}
                                            attrs)]))
 
-(defmethod create-route :show [{:keys [resource attrs]}]
-  (let [resource-name (name resource)]
-    [(str "/" resource-name "/:id") (merge {:name (keyword resource-name "show")
-                                            :conflicting true
-                                            :controllers [{:start (fn [_] (prn resource " :show called"))}]}
+(defmethod create-route :show [{:keys [resource plural attrs]}]
+  (let [resource-name (name resource)
+        resource-plural (pluralise resource plural)]
+    [(str "/" resource-plural "/:id") (merge {:name (keyword resource-name "show")
+                                              :conflicting true}
                                            attrs)]))
 
 (defmethod create-route :edit [{:keys [resource attrs]}]

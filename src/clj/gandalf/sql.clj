@@ -26,10 +26,19 @@
      :from [table-name]}
   ))
 
+(defn default-show-query
+  "Returns the default query for the :show action if one isn't provided for the resource."
+  [resource-map]
+
+  (let [resource-name (get resource-map :resource)
+        table-name (get resource-map :table resource-name)]
+    {:select [:*]
+     :from [table-name]
+     :where [:= :id :?id]}))
 
 (defn fetch-results
-  [query]
-  (j/query @ds (sql/format query :params {:foo :rrrr})))
+  [query params]
+  (j/query @ds (sql/format query :params params)))
 
 ;; ------------------------------------------------------------------------
 (comment
