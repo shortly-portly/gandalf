@@ -67,7 +67,12 @@
   (let [resource-name (name resource)
         resource-plural (pluralise resource plural)]
     [(str "/" resource-plural "/:id") (merge {:name (keyword resource-name "show")
-                                              :conflicting true}
+                                              :conflicting true
+                                              :view #'view/index-page
+                                              :controllers [{:parameters {:path [:id]}
+                                                            :start (fn [{:keys [path]}]
+                                                                     (prn ":show..." resource (:id path))
+                                                                     (rf/dispatch [:get-resource :show resource path]))}]}
                                            attrs)]))
 
 (defmethod create-route :edit [{:keys [resource attrs]}]

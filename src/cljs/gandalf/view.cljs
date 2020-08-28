@@ -4,8 +4,9 @@
    [re-frame.core :as rf]))
 
 (defn index-page []
+  (prn "index-page called")
   [:section.section>div.container>div.content
-   (when-let [view @(rf/subscribe [:view])]
-     (prn "index-page view :" view)
+   (let [view @(rf/subscribe [:view])]
+     (if view
      [:div
-      [widget/widget view]])])
+      [widget/widget view]]))])

@@ -1,7 +1,9 @@
 (ns gandalf.widget
   (:require [clojure.string]
             [reagent.core :as r]
-            [re-frame.core :as rf]))
+            [re-frame.core :as rf]
+            [reitit.frontend.easy :as rfe]
+            ))
 
 (defn build-path
   ([root path] (if (vector? path) path (conj root path)))
@@ -32,12 +34,7 @@
 (defn build-row-action
   [action resource id]
   ^{:key action}
-  [:a {:href "#"
-       :on-click (fn [e]
-                   (.preventDefault e)
-                   (rf/dispatch (conj (action default-row-actions) (keyword resource (name action)) id))
-                   )
-       } action])
+  [:a {:href (rfe/href (keyword resource (name action)) {:id id})} action])
 
 ;;      [:li [:a {:href (rfe/href ::item {:id 1})} "Item 1"]]
 

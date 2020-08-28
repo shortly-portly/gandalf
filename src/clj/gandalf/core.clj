@@ -83,7 +83,8 @@
                                  (let [results (into [] (sql/fetch-results query path-params))]
                              (prn "results for :show :" results)
                            {:status 200
-                            :body {:data results
+                            :body {:resource resource
+                                   :data results
                                    :schema schema
                                    :view view}}))}}}))
 
