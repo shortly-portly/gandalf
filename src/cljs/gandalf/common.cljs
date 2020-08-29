@@ -52,9 +52,12 @@
         resource-plural (pluralise resource plural)
         url (str "/" resource-plural)]
     [url (merge {:name (keyword resource-name "index")
-                 :controllers [{:start (fn [_] (rf/dispatch [:resource-index resource url (keyword resource-name "index")]))}]
-                 :view #'view/index-page }
+                 :view #'view/index-page
+                 :controllers [{:start (fn [_] (rf/dispatch [:get-resource :index resource {}]))}]}
                 attrs)]))
+
+;;                 :controllers [{:start (fn [_] (rf/dispatch [:resource-index resource url (keyword resource-name "index")]))}]}
+
 (defmethod create-route :new [{:keys [resource plural attrs]}]
   (let [resource-name (name resource)
         resource-plural (pluralise resource plural)]
@@ -71,7 +74,6 @@
                                               :view #'view/index-page
                                               :controllers [{:parameters {:path [:id]}
                                                             :start (fn [{:keys [path]}]
-                                                                     (prn ":show..." resource (:id path))
                                                                      (rf/dispatch [:get-resource :show resource path]))}]}
                                            attrs)]))
 

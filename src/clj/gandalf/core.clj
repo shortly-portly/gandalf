@@ -53,7 +53,8 @@
                               (let [results (into [] (sql/fetch-results query {}))]
                                 (prn "results :" results)
                                 {:status 200
-                                 :body {:data results
+                                 :body {:resource resource
+                                        :data results
                                         :schema schema
                                         :view view}}))}}}))
 
@@ -71,22 +72,21 @@
                           {:status 200
                            :body "ok"})}}})
 
-
 (defmethod create-route :show [{:keys [resource] :as resource-map}]
   (let [query (get-in resource-map [:sql :show] (sql/default-show-query resource-map))
         schema (get resource-map :schema [])
         view (get-in resource-map [:view :show] [])]
-  {:show {:conflicting true
-          :get {:summary (str "Returns a " (name resource) " with the given id")
-                :parameters {:path {:id int?}}
-                :handler (fn [{:keys [path-params]}]
-                                 (let [results (into [] (sql/fetch-results query path-params))]
-                             (prn "results for :show :" results)
-                           {:status 200
-                            :body {:resource resource
-                                   :data results
-                                   :schema schema
-                                   :view view}}))}}}))
+    {:show {:conflicting true
+            :get {:summary (str "Returns a " (name resource) " with the given id")
+                  :parameters {:path {:id int?}}
+                  :handler (fn [{:keys [path-params]}]
+                             (let [results (into [] (sql/fetch-results query path-params))]
+                               (prn "results for :show :" results)
+                               {:status 200
+                                :body {:resource resource
+                                       :data results
+                                       :schema schema
+                                       :view view}}))}}}))
 
 (defmethod create-route :edit [{:keys [resource]}]
   {:edit {:conflicting true

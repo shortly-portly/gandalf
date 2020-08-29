@@ -41,8 +41,6 @@
        (assoc-in [:schema resource] schema)
        (assoc-in [:view resource] view))))
 
-;; The :oops event is called whenever a http request to the server fails for some reason.
-;; It displays the returned error message to the console.
 (rf/reg-event-fx
  :get-resource
  (fn [{:keys [db]} [_ action resource params ]]
@@ -57,6 +55,15 @@
                    :on-success [:set-resource-view]
                    :on-failure [:oops]}})))
 
+;; The :set-resource event is called whenever a succesful request to :get-resource event for a resource
+;; has been received.
+;;
+;; The reply will contain up to four elements from the server:
+;;
+;; resource - the name of the for which the data, view and schema apply.
+;; data - the actual data for this resource e.g. a list of user records.
+;; view - a map defining how to display the data.
+;; schema - a malli schema definition defining how the data should be validated.
 (rf/reg-event-db
  :set-resource-view
  (fn [db [_ {:keys [resource data schema view]}]]
@@ -69,6 +76,8 @@
        )))
 
 
+;; The :oops event is called whenever a http request to the server fails for some reason.
+;; It displays the returned error message to the console.
 (rf/reg-event-db
  :oops
  (fn [db [_ result]]
