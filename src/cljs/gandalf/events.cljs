@@ -7,41 +7,6 @@
 ;;dispatchers
 
 (rf/reg-event-fx
- :resource-index
- (fn [{:keys [db]} [_ resource url resource-name]]
-   (let [router (:router db)
-         match (r/match-by-name router resource-name)
-         path  (:path match)]
-     {:http-xhrio {:method :get
-                   :uri url
-                   :format (ajax/transit-request-format)
-                   :response-format (ajax/transit-response-format)
-                   :on-success [:set-resource-index resource]
-                   :on-failure [:oops]}})))
-
-;; The :set-resource-index event is called whenever a succesful request to the index action for a resource
-;; has been received.
-;;
-;; The reply will contain up to three elements from the server:
-;;
-;; data - the actual data for this resource e.g. a list of user records.
-;; view - a map defining how to display the data.
-;; schema - a malli schema definition defining how the data should be validated.
-;;
-;; TODO:
-;; It makes no sense to pass a schema definition to an index view as all we are doing is displaying the data.
-;; BUT..I get the sense this function is really generic and will work with other actions once they are defined.
-
-(rf/reg-event-db
- :set-resource-index
- (fn [db [_ resource {:keys [data schema view]}]]
-   (-> db
-       (assoc :resource resource)
-       (assoc-in [:data resource] data)
-       (assoc-in [:schema resource] schema)
-       (assoc-in [:view resource] view))))
-
-(rf/reg-event-fx
  :get-resource
  (fn [{:keys [db]} [_ action resource params ]]
    (let [router (:router db)
