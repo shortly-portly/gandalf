@@ -32,7 +32,6 @@
 (rf/reg-event-db
  :set-resource-view
  (fn [db [_ {:keys [resource data schema view]}]]
-   (prn ":set-resource-view called")
    (-> db
        (assoc :resource resource)
        (assoc-in [:data resource] data)

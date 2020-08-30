@@ -38,18 +38,13 @@
 
 (defmulti widget :type)
 
-(defmethod widget :text [{:keys [path]}]
-  (let [value (r/atom @(rf/subscribe [:data path]))]
-      [:div
-       [:span @value]]))
-
 (defmethod widget :actions [{:keys [path resource actions]}]
   (let [id @(rf/subscribe [:data path])]
       [:div
     (map #(build-row-action % resource id) actions)]))
 
+
 (defmethod widget :button [{:keys [label dispatch style] :as button-data}]
-  (prn ":button dispatch :" dispatch)
     [:button.btn.mr-2
      {:class style
       :on-click #(rf/dispatch [dispatch button-data])} label])
@@ -59,8 +54,16 @@
       [:div
        [:span @value]]))
 
+(defmethod widget :text [{:keys [path label] :as widget-data}]
+  (let [value (r/atom @(rf/subscribe [:data path]))]
+
+    ^{:key widget-data}
+    [:div.row
+     [:div.col-sm label]
+     [:div.col-sm @value]]))
+
+
 (defmethod widget :table [view]
-  (prn ":table :" view)
     (let [root        [(:path view)]
           fields      (:fields view)
           row-actions (:row-actions view)
@@ -83,3 +86,14 @@
               (let [data-path   (build-path root index (:path field))
                     widget-data (assoc field :path data-path)]
                 [widget widget-data])])])]]))
+
+(defmethod widget :card [view]
+  (let [root [(:path view)]
+        fields (:fields view)]
+        [:div.card
+         [:div.card-body
+          (doall (for [field fields]
+            ^{:key field}
+            (let [data-path (build-path root (:path field))
+                  widget-data (assoc field :path data-path)]
+              (widget widget-data))))]]))
