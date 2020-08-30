@@ -9,4 +9,5 @@
    (let [view @(rf/subscribe [:view])]
      (if view
      [:div
-      [widget/widget view]]))])
+      (for [widget view]
+      [widget/widget widget])]))])

@@ -36,8 +36,6 @@
   ^{:key action}
   [:a {:href (rfe/href (keyword resource (name action)) {:id id})} action])
 
-;;      [:li [:a {:href (rfe/href ::item {:id 1})} "Item 1"]]
-
 (defmulti widget :type)
 
 (defmethod widget :text [{:keys [path]}]
@@ -49,6 +47,17 @@
   (let [id @(rf/subscribe [:data path])]
       [:div
     (map #(build-row-action % resource id) actions)]))
+
+(defmethod widget :button [{:keys [label dispatch style] :as button-data}]
+  (prn ":button dispatch :" dispatch)
+    [:button.btn.mr-2
+     {:class style
+      :on-click #(rf/dispatch [dispatch button-data])} label])
+
+(defmethod widget :cell [{:keys [path]}]
+  (let [value (r/atom @(rf/subscribe [:data path]))]
+      [:div
+       [:span @value]]))
 
 (defmethod widget :table [view]
   (prn ":table :" view)

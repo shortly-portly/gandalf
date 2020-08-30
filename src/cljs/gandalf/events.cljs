@@ -55,6 +55,13 @@
  (fn [db [_ router]]
    (assoc db :router router)))
 
+;; The :button-press event handles the pressing of a button on click event.
+(rf/reg-event-db
+ :button-press
+ (fn [db [_ button-data]]
+   (let [path (:path button-data)]
+     (assoc-in db path "wibble"))))
+
 ;; The :view subscription function returns the definition of how the currently defined :resource should
 ;; be displayed. Note: It is possible that no :resource has been defined in which case this function should
 ;; return nil.

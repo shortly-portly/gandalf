@@ -84,7 +84,7 @@
                                (prn "results for :show :" results)
                                {:status 200
                                 :body {:resource resource
-                                       :data results
+                                       :data (first results)
                                        :schema schema
                                        :view view}}))}}}))
 
