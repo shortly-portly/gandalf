@@ -2,15 +2,26 @@
   (:require [clojure.string]
             [reagent.core :as r]
             [re-frame.core :as rf]
-            [reitit.frontend.easy :as rfe]
-            ))
+            [reitit.frontend.easy :as rfe]))
 
 (defn build-path
-  ([root path] (if (vector? path) path (conj root path)))
-  ([root index path] (if (vector? path) path (conj root index path))))
+  "Generate a full path from a root, possible index and path element.
+
+  A widget generally defines a :path key whose value  is itself a key whose value is the
+  value for the widget.
+
+  It is possible to pass a path value of nil which will simply return the root value. This
+  allows for a container style widgets that doesn't itself display data but contains widgets
+  that do."
+  ([root path]
+   (if  path (if (vector? path) path (conj [] root path)) root))
+  ([root index path]
+   (if  path (if (vector? path) path (conj [] root index path)) root) ))
 
 (defn field-path-to-string
-  "Returns a string version of the provided keyword path."
+  "Returns a string version of the provided keyword path.
+
+  This allows the automatic generation of a label from a keyword."
   [path]
   (-> (name path)
       (clojure.string/replace "_" " ")
@@ -40,19 +51,18 @@
 
 (defmethod widget :actions [{:keys [path resource actions]}]
   (let [id @(rf/subscribe [:data path])]
-      [:div
-    (map #(build-row-action % resource id) actions)]))
-
+    [:div
+     (map #(build-row-action % resource id) actions)]))
 
 (defmethod widget :button [{:keys [label dispatch style] :as button-data}]
-    [:button.btn.mr-2
-     {:class style
-      :on-click #(rf/dispatch [dispatch button-data])} label])
+  [:button.btn.mr-2
+   {:class style
+    :on-click #(rf/dispatch [dispatch button-data])} label])
 
 (defmethod widget :cell [{:keys [path]}]
   (let [value (r/atom @(rf/subscribe [:data path]))]
-      [:div
-       [:span @value]]))
+    [:div
+     [:span @value]]))
 
 (defmethod widget :text [{:keys [path label] :as widget-data}]
   (let [value (r/atom @(rf/subscribe [:data path]))]
@@ -62,38 +72,61 @@
      [:div.col-sm label]
      [:div.col-sm @value]]))
 
-
 (defmethod widget :table [view]
-    (let [root        [(:path view)]
-          fields      (:fields view)
-          row-actions (:row-actions view)
-          item-count  @(rf/subscribe [:item-count root])]
-      [:table.table
-       [:thead
+  (let [root        (:path view)
+        fields      (:fields view)
+        row-actions (:row-actions view)
+        item-count  @(rf/subscribe [:item-count [root]])]
+    (prn ":table root :" root)
+    [:table.table
+     [:thead
+      [:tr
+       (for [field fields]
+         ^{:key field}
+         [:th
+          (label-for field)])
+       (if row-actions [:th "Actions"])]]
+     [:tbody
+      (for [index (range item-count)]
+        ^{:key index}
         [:tr
          (for [field fields]
            ^{:key field}
-           [:th
-            (label-for field)])
-         (if row-actions [:th "Actions"])]]
-       [:tbody
-        (for [index (range item-count)]
-          ^{:key index}
-          [:tr
-           (for [field fields]
-             ^{:key field}
-             [:td
-              (let [data-path   (build-path root index (:path field))
-                    widget-data (assoc field :path data-path)]
-                [widget widget-data])])])]]))
+           [:td
+            (let [data-path   (build-path root index (:path field))
+                  widget-data (assoc field :path data-path)]
+              [widget widget-data])])])]]))
 
 (defmethod widget :card [view]
-  (let [root [(:path view)]
+  (let [root (:path view)
         fields (:fields view)]
-        [:div.card
-         [:div.card-body
-          (doall (for [field fields]
-            ^{:key field}
-            (let [data-path (build-path root (:path field))
-                  widget-data (assoc field :path data-path)]
-              (widget widget-data))))]]))
+    ^{:key view}
+    [:div.card
+     ^{:key fields}
+     [:div.card-body
+      (doall (for [field fields]
+               (let [data-path (build-path root (:path field))
+                     widget-data (assoc field :path data-path)]
+               ^{:key field}
+                 (widget widget-data))))]]))
+
+(defmethod widget :two-columns [view]
+  (let [root (:path view)
+        column-1 (:column-1 view)
+        column-2 (:column-2 view)]
+    [:div.row
+     ^{:key column-1}
+     [:div.col-sm
+      (doall (for [field column-1]
+               (let [data-path (build-path root (:path field))
+                     widget-data (assoc field :path data-path)]
+               ^{:key field}
+                 (widget widget-data))))]
+
+     ^{:key column-2}
+     [:div.col-sm
+      (doall (for [field column-2]
+               (let [data-path (build-path root (:path field))
+                     widget-data (assoc field :path data-path)]
+               ^{:key field}
+                 (widget widget-data))))]]))
