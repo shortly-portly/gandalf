@@ -1,5 +1,8 @@
 (ns gandalf.core
-  (:require [reitit.core :as r]
+  (:require [malli.core :as m]
+            [malli.edn :as edn]
+            [malli.util :as mu]
+            [reitit.core :as r]
             [reitit.coercion.spec]
             [gandalf.sql :as sql]
             [clojure.pprint]))
@@ -52,10 +55,12 @@
                    :handler (fn [_]
                               (let [results (into [] (sql/fetch-results query {}))]
                                 (prn "results :" results)
+                                (prn "schema :" schema)
+                                (prn "schema with edn :" (edn/write-string schema))
                                 {:status 200
                                  :body {:resource resource
                                         :data results
-                                        :schema schema
+                                        :schema (edn/write-string schema)
                                         :view view}}))}}}))
 
 (defmethod create-route :create [{:keys [resource]}]
@@ -85,15 +90,24 @@
                                {:status 200
                                 :body {:resource resource
                                        :data (first results)
-                                       :schema schema
+                                       :schema (edn/write-string schema)
                                        :view view}}))}}}))
 
-(defmethod create-route :edit [{:keys [resource]}]
-  {:edit {:conflicting true
-          :get {:summary (str "Returns an edit " (name resource) " form")
-                :handler (fn [_]
-                           {:status 200
-                            :body "ok"})}}})
+(defmethod create-route :edit [{:keys [resource] :as resource-map}]
+  (let [query (get-in resource-map [:sql :edit] (sql/default-edit-query resource-map))
+        schema (get resource-map :schema [])
+        view (get-in resource-map [:view :edit] [])]
+    {:show {:conflicting true
+            :get {:summary (str "Returns an edit " (name resource) " form")
+                  :parameters {:path {:id int?}}
+                  :handler (fn [{:keys [path-params]}]
+                             (let [results (into [] (sql/fetch-results query path-params))]
+                               (prn "results for :edit :" results)
+                               {:status 200
+                                :body {:resource resource
+                                       :data (first results)
+                                       :schema (edn/write-string schema)
+                                       :view view}}))}}}))
 
 (defmethod create-route :update [{:keys [resource]}]
   {:update {:conflicting true
@@ -197,3 +211,15 @@
                   (new-route route-map)
                   (edit-route route-map)
                   (show-update-delete-routes route-map)]))))
+
+;; Testing....
+
+(def schema
+  [:and
+   [:map
+    [:x [:and int? [:> 6]]]
+    [:y [int?]]]
+   [:fn (fn [{:keys [x y]}] (> x y))]])
+
+(def form
+  [:fn '(fn [{:keys [x y]}] (> x y))])

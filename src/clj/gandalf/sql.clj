@@ -36,6 +36,16 @@
      :from [table-name]
      :where [:= :id :?id]}))
 
+(defn default-edit-query
+  "Returns the default query for the :edit action if one isn't provided for the resource."
+  [resource-map]
+
+  (let [resource-name (get resource-map :resource)
+        table-name (get resource-map :table resource-name)]
+    {:select [:*]
+     :from [table-name]
+     :where [:= :id :?id]}))
+
 (defn fetch-results
   [query params]
   (j/query @ds (sql/format query :params params)))
