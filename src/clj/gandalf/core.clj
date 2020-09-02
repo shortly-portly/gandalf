@@ -97,12 +97,13 @@
   (let [query (get-in resource-map [:sql :edit] (sql/default-edit-query resource-map))
         schema (get resource-map :schema [])
         view (get-in resource-map [:view :edit] [])]
-    {:show {:conflicting true
+    {:edit {:conflicting true
             :get {:summary (str "Returns an edit " (name resource) " form")
                   :parameters {:path {:id int?}}
                   :handler (fn [{:keys [path-params]}]
                              (let [results (into [] (sql/fetch-results query path-params))]
                                (prn "results for :edit :" results)
+                               (prn "view for :edit :" view)
                                {:status 200
                                 :body {:resource resource
                                        :data (first results)

@@ -77,10 +77,14 @@
                                                                      (rf/dispatch [:get-resource :show resource path]))}]}
                                            attrs)]))
 
-(defmethod create-route :edit [{:keys [resource attrs]}]
-  (let [resource-name (name resource)]
-    [(str "/" resource-name "/:id/edit") (merge {:name (keyword resource-name "edit")
-                                                 :controllers [{:start (fn [_] (prn resource " :edit called"))}]}
+(defmethod create-route :edit [{:keys [resource plural attrs]}]
+  (let [resource-name (name resource)
+        resource-plural (pluralise resource plural)]
+    [(str "/" resource-plural "/:id/edit") (merge {:name (keyword resource-name "edit")
+                                                 :view #'view/index-page
+                                                 :controllers [{:parameters {:path [:id]}
+                                                                :start (fn [{:keys [path]}]
+                                                                         (rf/dispatch [:get-resource :edit resource path]))}]}
                                                 attrs)]))
 
 (defn create-routes

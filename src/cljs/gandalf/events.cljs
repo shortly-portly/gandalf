@@ -9,6 +9,9 @@
 (rf/reg-event-fx
  :get-resource
  (fn [{:keys [db]} [_ action resource params ]]
+   (prn ":get-resource action :" action)
+   (prn ":get-resourc resource :" resource)
+   (prn ":get-resource params :" params)
    (let [router (:router db)
          path-name (keyword resource (name action))
          match (r/match-by-name router path-name params)
