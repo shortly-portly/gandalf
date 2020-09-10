@@ -2,8 +2,12 @@
   (:require
     [re-frame.core :as rf]
     [ajax.core :as ajax]
-    [reitit.core :as r]))
-
+    [reitit.core :as r]
+    [malli.core :as m]
+    [malli.edn :as edn]
+    [malli.util :as mu]
+    [malli.error :as me]
+    [malli.transform :as mt]))
 ;;dispatchers
 
 (rf/reg-event-fx
@@ -32,13 +36,17 @@
 ;; data - the actual data for this resource e.g. a list of user records.
 ;; view - a map defining how to display the data.
 ;; schema - a malli schema definition defining how the data should be validated.
+;;
+;; Note the malli schema is passed from the server as a string so needs converting before
+;; storing.
+
 (rf/reg-event-db
  :set-resource-view
  (fn [db [_ {:keys [resource data schema view]}]]
    (-> db
        (assoc :resource resource)
        (assoc-in [:data resource] data)
-       (assoc-in [:schema resource] schema)
+       (assoc-in [:schema resource] (edn/read-string schema))
        (assoc-in [:view resource] view)
        )))
 
@@ -63,6 +71,34 @@
  (fn [db [_ button-data]]
    (let [path (:path button-data)]
      (assoc-in db path "wibble"))))
+
+
+(defn validate [db widget-schema value data-path]
+  (let [converted-value (m/decode widget-schema value mt/string-transformer)
+         valid? (m/validate widget-schema converted-value)]
+     (if valid?
+       (->
+        (assoc-in db (into [:data] data-path) converted-value)
+        (assoc-in  (into [:error] data-path) nil))
+       (->
+        (assoc-in db (into [:error] data-path)
+                  (-> (m/explain widget-schema converted-value)
+                      (me/humanize)))))))
+
+;; The :update event updates the db store for the given data-path.
+;; For validation an optional scheam-path can be provided
+(rf/reg-event-db
+ :update
+ (fn [db [_ data-path schema-path value]]
+   (let [resource (db :resource)
+         schema-path (if schema-path schema-path data-path)
+         schema (get-in db [:schema resource])
+         widget-schema (mu/get-in schema schema-path)]
+     (if widget-schema
+       (validate db widget-schema value data-path)
+       (->
+        (assoc-in db (into [:data] data-path) value)
+        (assoc-in  (into [:error] data-path) nil))))))
 
 ;; The :view subscription function returns the definition of how the currently defined :resource should
 ;; be displayed. Note: It is possible that no :resource has been defined in which case this function should
@@ -137,3 +173,9 @@
    (let [data (:data db)]
      (get-in data path))))
 
+
+(rf/reg-sub
+ :error
+ (fn [db [_ path]]
+   (let [error (:error db)]
+     (first (get-in error path)))))

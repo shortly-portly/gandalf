@@ -64,6 +64,22 @@
     [:div
      [:span @value]]))
 
+(defmethod widget :text-input [{:keys [path schema-path label] :as widget-data}]
+  (prn "Widget data for :text-input :" widget-data)
+  (let [value (r/atom @(rf/subscribe [:data path]))]
+    (fn []
+      (let [error @(rf/subscribe [:error path])]
+        ^{:key widget-data}
+        [:div.form-group
+         [:label label]
+         [:input.form-control
+         {:type :text
+          :class (if error "is-invalid" "is-valid")
+          :value @value
+          :on-change #(reset! value (-> % .-target .-value))
+          :on-blur #(rf/dispatch [:update path schema-path @value])}]
+        (if error [:div.invalid-feedback error]) ]))))
+
 (defmethod widget :text [{:keys [path label] :as widget-data}]
   (let [value (r/atom @(rf/subscribe [:data path]))]
 
@@ -108,7 +124,7 @@
                (let [data-path (build-path root (:path field))
                      widget-data (assoc field :path data-path)]
                ^{:key field}
-                 (widget widget-data))))]]))
+                 [widget widget-data])))]]))
 
 (defmethod widget :two-columns [view]
   (let [root (:path view)
@@ -121,7 +137,7 @@
                (let [data-path (build-path root (:path field))
                      widget-data (assoc field :path data-path)]
                ^{:key field}
-                 (widget widget-data))))]
+                 [widget widget-data])))]
 
      ^{:key column-2}
      [:div.col-sm
@@ -129,4 +145,4 @@
                (let [data-path (build-path root (:path field))
                      widget-data (assoc field :path data-path)]
                ^{:key field}
-                 (widget widget-data))))]]))
+                 [widget widget-data])))]]))
