@@ -110,6 +110,8 @@
                                        :schema (edn/write-string schema)
                                        :view view}}))}}}))
 
+;; TODO: Need to re-run validation - never trust data coming from the outside world.
+;; TODO: Need to check for SQL update errors.
 (defmethod create-route :update [{:keys [resource] :as resource-map}]
   (let [query (get-in resource-map [:sql :update] (sql/default-update-query resource-map))]
   {:update {:conflicting true
