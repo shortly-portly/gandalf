@@ -87,6 +87,17 @@
                                                                          (rf/dispatch [:get-resource :edit resource path]))}]}
                                                 attrs)]))
 
+(defmethod create-route :update [{:keys [resource plural attrs]}]
+  (let [resource-name (name resource)
+        resource-plural (pluralise resource plural)]
+    [(str "/" resource-plural "/:id") (merge {:name (keyword resource-name "update")
+                                              :conflicting true
+                                              :view #'view/index-page
+                                              :controllers [{:parameters {:path [:id]}
+                                                             :start (fn [{:keys [path]}]
+                                                                      (rf/dispatch [:put-resource :edit resource path]))}]}
+                                                attrs)]))
+
 (defn create-routes
   "Given a map containing a `resource` and a vector of `actions` create a set of Reitit route defintiions
 
@@ -96,6 +107,7 @@
   - :new
   - :show
   - :edit
+  - :update
 
   Example:
 
@@ -103,7 +115,7 @@
       ;; => [[\"/wibbles\" {:name :wibble/index}][\"/wibble/new\" {:name :wibble/new}]"
 
   [{:keys [resource actions]
-    :or {actions [:index :new :show :edit]}
+    :or {actions [:index :new :show :edit :update]}
     :as attrs}]
 
   (vec (for [action actions]

@@ -8,8 +8,20 @@
     [malli.util :as mu]
     [malli.error :as me]
     [malli.transform :as mt]))
-;;dispatchers
 
+(defn validate [db widget-schema value data-path]
+  (let [converted-value (m/decode widget-schema value mt/string-transformer)
+         valid? (m/validate widget-schema converted-value)]
+     (if valid?
+       (->
+        (assoc-in db (into [:data] data-path) converted-value)
+        (assoc-in  (into [:error] data-path) nil))
+       (->
+        (assoc-in db (into [:error] data-path)
+                  (-> (m/explain widget-schema converted-value)
+                      (me/humanize)))))))
+
+;; dispatchers
 (rf/reg-event-fx
  :get-resource
  (fn [{:keys [db]} [_ action resource params ]]
@@ -22,6 +34,27 @@
          path  (:path match)]
      {:http-xhrio {:method :get
                    :uri path
+                   :format (ajax/transit-request-format)
+                   :response-format (ajax/transit-response-format)
+                   :on-success [:set-resource-view]
+                   :on-failure [:oops]}})))
+
+     ;;                  :on-click #(rf/dispatch [:post-resource resource params ])} label])))
+(rf/reg-event-fx
+ :post-resource
+ (fn [{:keys [db]} [_ resource action]]
+   (prn ":get-resource action :" action)
+   (prn ":get-resourc resource :" resource)
+   (prn ":get-resource params :" (get-in db [:data resource :id]))
+   (let [router (:router db)
+         path-name (keyword resource (name action))
+         id-value (get-in db [:data resource :id])
+         match (r/match-by-name router path-name {:id id-value})
+         path  (:path match)]
+
+     {:http-xhrio {:method :put
+                   :uri path
+                   :params (get-in db [:data resource])
                    :format (ajax/transit-request-format)
                    :response-format (ajax/transit-response-format)
                    :on-success [:set-resource-view]
@@ -73,17 +106,6 @@
      (assoc-in db path "wibble"))))
 
 
-(defn validate [db widget-schema value data-path]
-  (let [converted-value (m/decode widget-schema value mt/string-transformer)
-         valid? (m/validate widget-schema converted-value)]
-     (if valid?
-       (->
-        (assoc-in db (into [:data] data-path) converted-value)
-        (assoc-in  (into [:error] data-path) nil))
-       (->
-        (assoc-in db (into [:error] data-path)
-                  (-> (m/explain widget-schema converted-value)
-                      (me/humanize)))))))
 
 ;; The :update event updates the db store for the given data-path.
 ;; For validation an optional scheam-path can be provided

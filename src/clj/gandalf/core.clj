@@ -110,12 +110,15 @@
                                        :schema (edn/write-string schema)
                                        :view view}}))}}}))
 
-(defmethod create-route :update [{:keys [resource]}]
+(defmethod create-route :update [{:keys [resource] :as resource-map}]
+  (let [query (get-in resource-map [:sql :update] (sql/default-update-query resource-map))]
   {:update {:conflicting true
-            :post {:summary (str "Updates a " (name resource) " with the given id")
-                   :handler (fn [_]
+            :put {:summary (str "Updates a " (name resource) " with the given id")
+                   :handler (fn [{:keys [params]}]
+                              (clojure.pprint/pprint params)
+                              (prn "sql update query :" (sql/update-query query params))
                               {:status 200
-                               :body "ok"})}}})
+                               :body {:ok "woohooo"}})}}}))
 
 (defmethod create-route :delete [{:keys [resource]}]
   {:delete {:conflicting true

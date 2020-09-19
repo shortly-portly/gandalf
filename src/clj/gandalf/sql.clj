@@ -1,5 +1,6 @@
 (ns gandalf.sql
   (:require [clojure.java.jdbc :as j]
+            [clojure.pprint]
             [honeysql.core :as sql]
             [honeysql.helpers :as helpers]))
 
@@ -46,11 +47,32 @@
      :from [table-name]
      :where [:= :id :?id]}))
 
+(defn default-update-query
+  "Returns the default update sql query for the :update action if one isn't provided for the resource.
+
+  Note that we don't provide the list of fields/value to update as this will be provided at runtime."
+  [resource-map]
+
+  (let [resource-name (get resource-map :resource)
+        table-name (get resource-map :table resource-name)]
+    {:update table-name
+     :where [:= :id :?id]}))
+
 (defn fetch-results
   [query params]
   (j/query @ds (sql/format query :params params)))
 
+(defn update-query
+  [query params]
+  (let [id {:id (:id params)}
+        params (dissoc params :id)
+        query (assoc query :set params)]
+    (j/execute! @ds(sql/format query id))))
+  
+
 ;; ------------------------------------------------------------------------
+;;
+;;
 (comment
 (def conn {:datasource db/*db*})
 
