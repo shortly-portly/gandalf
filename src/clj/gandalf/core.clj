@@ -54,9 +54,6 @@
     {:index {:get {:summary (str "Returns a list of " (pluralise resource (:plural resource-map)))
                    :handler (fn [_]
                               (let [results (into [] (sql/fetch-results query {}))]
-                                (prn "results :" results)
-                                (prn "schema :" schema)
-                                (prn "schema with edn :" (edn/write-string schema))
                                 {:status 200
                                  :body {:resource resource
                                         :data results

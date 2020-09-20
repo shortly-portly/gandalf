@@ -67,7 +67,10 @@
   (let [id {:id (:id params)}
         params (dissoc params :id)
         query (assoc query :set params)]
-    (j/execute! @ds(sql/format query id))))
+    (try
+      (j/execute! @ds(sql/format query id))
+  (catch org.sqlite.SQLiteException e
+    (clojure.pprint/pprint e)))))
   
 
 ;; ------------------------------------------------------------------------
