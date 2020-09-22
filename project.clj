@@ -8,6 +8,7 @@
                  [honeysql "1.0.444"]
                  [metosin/reitit "0.5.2"]
                  [metosin/reitit-frontend "0.4.2"]
+                 [metosin/reitit-middleware "0.5.5"]
                  [metosin/reitit-spec "0.5.1"]
                  [metosin/malli "0.0.1-SNAPSHOT"]
                  [org.clojure/clojure "1.10.1"]

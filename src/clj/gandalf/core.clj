@@ -4,7 +4,9 @@
             [malli.util :as mu]
             [reitit.core :as r]
             [reitit.coercion.spec]
-            [gandalf.sql :as sql]
+            [reitit.ring.middleware.exception :as exception]
+            [gandalf.rop :as rop]
+           [gandalf.sql :as sql]
             [clojure.pprint]))
 
 (defn pluralise
@@ -52,6 +54,7 @@
         schema (get resource-map :schema [])
         view (get-in resource-map [:view :index])]
     {:index {:get {:summary (str "Returns a list of " (pluralise resource (:plural resource-map)))
+
                    :handler (fn [_]
                               (let [results (into [] (sql/fetch-results query {}))]
                                 {:status 200
@@ -113,11 +116,20 @@
   (let [query (get-in resource-map [:sql :update] (sql/default-update-query resource-map))]
   {:update {:conflicting true
             :put {:summary (str "Updates a " (name resource) " with the given id")
-                   :handler (fn [{:keys [params]}]
-                              (clojure.pprint/pprint params)
-                              (prn "sql update query :" (sql/update-query query params))
-                              {:status 200
-                               :body {:ok "woohooo"}})}}}))
+                   :handler (fn [request]
+                              (let [[result error] (rop/=>> (assoc request :sql-query query)
+                                                            sql/update-query)]
+                                (prn "result...." result)
+                                (prn "error....." error)
+                              (if error
+                                {:status 400
+                                 :body {:reason "something bad happened"}}
+                                {:status 200
+                                 :body {:result result}})))}}}))
+
+
+
+
 
 (defmethod create-route :delete [{:keys [resource]}]
   {:delete {:conflicting true

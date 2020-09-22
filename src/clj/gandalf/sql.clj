@@ -62,16 +62,18 @@
   [query params]
   (j/query @ds (sql/format query :params params)))
 
-(defn update-query
-  [query params]
+(defn update-query [{:keys [params sql-query]}]
   (let [id {:id (:id params)}
         params (dissoc params :id)
-        query (assoc query :set params)]
+        query (assoc sql-query :set params)]
     (try
-      (j/execute! @ds(sql/format query id))
+      (prn "update-query id :" id)
+      (prn "update-query params : " params)
+      (prn "update-query query :" query)
+      [(j/execute! @ds(sql/format query id)) nil]
   (catch org.sqlite.SQLiteException e
-    (clojure.pprint/pprint e)))))
-  
+    [nil :error]))))
+
 
 ;; ------------------------------------------------------------------------
 ;;
